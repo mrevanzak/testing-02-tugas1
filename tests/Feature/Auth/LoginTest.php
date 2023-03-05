@@ -7,7 +7,7 @@ use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class AuthenticationTest extends TestCase
+class LoginTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -16,6 +16,7 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
+        $response->assertViewIs('auth.login');
     }
 
     public function test_users_can_authenticate_using_the_login_screen()
@@ -27,6 +28,9 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
+        $this->assertDatabaseHas('users', [
+            'email' => $user->email,
+        ]);
         $this->assertAuthenticated();
         $response->assertRedirect(RouteServiceProvider::HOME);
     }
@@ -41,5 +45,14 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_users_can_not_view_a_login_form_when_authenticated()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/login');
+
+        $response->assertRedirect(RouteServiceProvider::HOME);
     }
 }
